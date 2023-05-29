@@ -6,7 +6,13 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
-def encoder(password,plain_text): # takes password and the plaintext btyestream inputs and returns encrypted hash btyesteam
+def encrypter(password: str, plain_text: str):
+    """
+    Encryptor takes a password and plain_text, then returns a ciphertext in base64
+    :param password:
+    :param plain_text:
+    :return:
+    """
     load_dotenv()
     salt = os.getenv("KEY").encode()
     kdf = PBKDF2HMAC(
@@ -15,13 +21,20 @@ def encoder(password,plain_text): # takes password and the plaintext btyestream 
         salt=salt,
         iterations=480000
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password))
+    plain_text = plain_text.encode()
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
     f = Fernet(key)
-    token = f.encrypt(plain_text).decode()
-    return token
+    cipher = f.encrypt(plain_text).decode()
+    return cipher
 
 
-def decoder(password,cipher_text): # takes password and the ciphertext btyestream inputs and returns plain text
+def decrypter(password: str, cipher_text: str):
+    """
+    Encryptor take a password and ciphertext, then returns a plaintext in base64
+    :param password:
+    :param cipher_text:
+    :return:
+    """
     load_dotenv()
     salt = os.getenv("KEY").encode()
     kdf = PBKDF2HMAC(
@@ -30,7 +43,7 @@ def decoder(password,cipher_text): # takes password and the ciphertext btyestrea
         salt=salt,
         iterations=480000
     )
-    key = base64.urlsafe_b64encode(kdf.derive(password))
+    key = base64.urlsafe_b64encode(kdf.derive(password.encode()))
     f = Fernet(key)
-    plain_text = f.decrypt(cipher_text).decode()
+    plain_text = f.decrypt(cipher_text.encode()).decode()
     return plain_text
