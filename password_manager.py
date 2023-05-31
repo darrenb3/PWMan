@@ -9,14 +9,12 @@ import list_items
 import update_item
 import delete_item
 
-
-
 if __name__ == "__main__":
     console = Console(highlight=False)
     console.print("Running the preflight check...")
     console.print("Checking for database...")
     db_present = os.path.exists("database.db")
-    if db_present == True:  # Checking if database.db exits. If not creates db file and table
+    if db_present:  # Checking if database.db exits. If not creates db file and table
         console.print("Database present...")
         pass
     else:
@@ -25,8 +23,16 @@ if __name__ == "__main__":
         cur.execute("CREATE TABLE items(name, date, string)")
         con.close()
         console.print("Database created...")
+    console.print("Checking for env file")
+    env_present = os.path.exists(".env")
+    if env_present:
+        console.print("Env file present...")
+        pass
+    else:
+        console.print("Please enter a random key into the .env file")
+        quit()
     console.print("Preflight complete!\n")
-    console.print("\nWelcome to")  # Generated with TextKool useing Big font
+    console.print("\nWelcome to")  # Generated with TextKool using Big font
     logo = """  _____                                    _   __  __                                   
  |  __ \                                  | | |  \/  |                                  
  | |__) |_ _ ___ _____      _____  _ __ __| | | \  / | __ _ _ __   __ _  __ _  ___ _ __ 
