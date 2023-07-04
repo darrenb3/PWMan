@@ -57,7 +57,7 @@ To exit the app please type exit
             break
         elif user_input == "new":
             if create_item.new_item():
-                console.print("\item created successfully\n")
+                console.print("\nitem created successfully\n")
         elif user_input == "list -a":
             list_items.list_all_items()
         elif user_input == "list":
