@@ -9,6 +9,12 @@ import list_items
 import update_item
 import delete_item
 
+"""
+To do:
+Add log in feature for user password
+Add salt data to its own DB table and set it as an objeect attribute
+"""
+
 if __name__ == "__main__":
     console = Console(highlight=False)
     console.print("Running the preflight check...")

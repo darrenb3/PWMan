@@ -2,14 +2,16 @@
 import sqlite3
 from datetime import datetime
 from rich.console import Console
+from crypto_funcs import crypto
 
 console = Console(highlight=False)
-
+crypto = crypto()
 
 def new_item():
     name = console.input("\nPlease enter a name for your item:\n")
     console.print("")
     content = console.input("\nPlease enter the content of your item:\n")
+    content = crypto.encrypt(content,"testing")
     console.print("")
     now = datetime.now().strftime('%H:%M:%S %m/%d/%Y')
     data = [name, now, content]
