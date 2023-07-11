@@ -12,38 +12,58 @@ import list_items
 import update_item
 import delete_item
 
-if __name__ == "__main__":
+
+class pwman:
     console = Console(highlight=False)
-    console.print("Running the preflight check...")
-    console.print("Checking for database...")
-    db_present = os.path.exists("database.db")
-    if db_present:  # Checking if database.db exits. If not creates db file and table
-        console.print("Database present...")
-        pass
-    else:
+
+    def dbcheck(self):
+        """Checks for presence of sqlite db file"""
+        console.print("Checking for database...")
+        db_present = os.path.exists("database.db")
+        if db_present:  # Checking if database.db exits. If not creates db file and table
+            console.print("Database present...")
+            pass
+        else:
+            con = sqlite3.connect("database.db")
+            cur = con.cursor()
+            cur.execute("CREATE TABLE items(name, date, string)")
+            cur.execute("CREATE TABLE salt(salt)")
+            con.close()
+            console.print("Database created...")
+
+    def saltcheck(self):
+        """Checks for presence of salt in the database"""
+        console.print("Checking for salt presence")
         con = sqlite3.connect("database.db")
         cur = con.cursor()
-        cur.execute("CREATE TABLE items(name, date, string)")
-        con.close()
-        console.print("Database created...")
-    console.print("Checking for salt table")
-    con = sqlite3.connect("database.db")
-    cur = con.cursor()
-    row = cur.execute("SELECT name FROM sqlite_master WHERE name='salt'")
-    salt_check = row.fetchone()
-    print(salt_check)
-    if salt_check == None:
-        cur.execute("CREATE TABLE salt(salt)")
-        salt = ''.join(random.choices(string.ascii_lowercase +
-                                      string.digits, k=7))
-        print(salt)
-        cur.execute("INSERT INTO salt VALUES(?)", [salt])  # salt check creates
-        con.close()
-        console.print("Salt created...")
-    else:
-        con.close()
-        console.print("Salt exists...")
+        row = cur.execute("SELECT salt FROM salt ")
+        salt_check = row.fetchone()
+        if salt_check == None:
+            salt = [''.join(random.choices(string.ascii_lowercase +
+                                           string.digits, k=7))]
+            cur.execute("INSERT INTO salt VALUES(?)",
+                        salt)  # salt check creates
+            con.commit()
+            con.close()
+            console.print("Salt created...")
+        else:
+            con.close()
+            console.print("Salt exists...")
+
+    def login(self):
+        """Checks that password is correct and returns it for use with crypto funcs"""
+        password = console.input("Please enter your password...\n")
+        return password
+
+
+if __name__ == "__main__":
+    console = Console(highlight=False)
+    pwman = pwman()
+    console.print("Running the preflight check...")
+    pwman.dbcheck()
+    pwman.saltcheck()
     console.print("Preflight complete!\n")
+    password = pwman.login()
     console.print("\nWelcome to")  # Generated with TextKool using Big font
     logo = """  _____                                    _   __  __                                   
  |  __ \                                  | | |  \/  |                                  
@@ -69,7 +89,7 @@ To exit the app please type exit
                 "\nThank you for using Password Manager\n\nExiting...\n")
             break
         elif user_input == "new":
-            if create_item.new_item():
+            if create_item.new_item(password):
                 console.print("\nitem created successfully\n")
         elif user_input == "list -a":
             list_items.list_all_items()
