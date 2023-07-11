@@ -1,19 +1,16 @@
 # This is the driver code for the cli password manager app
+# TODO: refactor driver code into class
 from rich.console import Console
 from dotenv import load_dotenv
 import os
 import sqlite3
+import string
+import random
 import cryptography
 import create_item
 import list_items
 import update_item
 import delete_item
-
-"""
-To do:
-Add log in feature for user password
-Add salt data to its own DB table and set it as an objeect attribute
-"""
 
 if __name__ == "__main__":
     console = Console(highlight=False)
@@ -29,14 +26,23 @@ if __name__ == "__main__":
         cur.execute("CREATE TABLE items(name, date, string)")
         con.close()
         console.print("Database created...")
-    console.print("Checking for env file")
-    env_present = os.path.exists(".env")
-    if env_present:
-        console.print("Env file present...")
-        pass
+    console.print("Checking for salt table")
+    con = sqlite3.connect("database.db")
+    cur = con.cursor()
+    row = cur.execute("SELECT name FROM sqlite_master WHERE name='salt'")
+    salt_check = row.fetchone()
+    print(salt_check)
+    if salt_check == None:
+        cur.execute("CREATE TABLE salt(salt)")
+        salt = ''.join(random.choices(string.ascii_lowercase +
+                                      string.digits, k=7))
+        print(salt)
+        cur.execute("INSERT INTO salt VALUES(?)", [salt])  # salt check creates
+        con.close()
+        console.print("Salt created...")
     else:
-        console.print("Please enter a random key into the .env file")
-        quit()
+        con.close()
+        console.print("Salt exists...")
     console.print("Preflight complete!\n")
     console.print("\nWelcome to")  # Generated with TextKool using Big font
     logo = """  _____                                    _   __  __                                   
@@ -59,7 +65,8 @@ To exit the app please type exit
         user_input = console.input(
             "\nPlease enter a command. For a list of commands use [bold]help[/bold]:\n")
         if user_input == "exit":
-            console.print("\nThank you for using Password Manager\n\nExiting...\n")
+            console.print(
+                "\nThank you for using Password Manager\n\nExiting...\n")
             break
         elif user_input == "new":
             if create_item.new_item():
