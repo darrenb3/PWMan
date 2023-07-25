@@ -2,6 +2,7 @@
 # TODO: refactor driver code into class
 from rich.console import Console
 from dotenv import load_dotenv
+from cryptography.hazmat.primitives import hashes
 import os
 import sqlite3
 import string
@@ -28,6 +29,7 @@ class pwman:
             cur = con.cursor()
             cur.execute("CREATE TABLE items(name, date, string)")
             cur.execute("CREATE TABLE salt(salt)")
+            cur.execute("CREATE TABLE password(password)")
             con.close()
             console.print("Database created...")
 
@@ -36,24 +38,57 @@ class pwman:
         console.print("Checking for salt presence")
         con = sqlite3.connect("database.db")
         cur = con.cursor()
-        row = cur.execute("SELECT salt FROM salt ")
+        row = cur.execute("SELECT salt FROM salt")
         salt_check = row.fetchone()
         if salt_check == None:
             salt = [''.join(random.choices(string.ascii_lowercase +
                                            string.digits, k=7))]
             cur.execute("INSERT INTO salt VALUES(?)",
-                        salt)  # salt check creates
+                        salt)  # creates and inserts salt into its own table
             con.commit()
             con.close()
             console.print("Salt created...")
         else:
             con.close()
             console.print("Salt exists...")
+    def passcheck(self):
+        """Checks for presence of password table. If not present prompts user to create their password and saves it"""
+        console.print("Checking for password presence")
+        con = sqlite3.connect("database.db")
+        cur = con.cursor()
+        row = cur.execute("SELECT password FROM password")
+        salt_check = row.fetchone()
+        if salt_check == None:
+            password = console.input("Please enter a new password.\n")
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(password.encode())
+            password = [str(digest.finalize())]
+            cur.execute("INSERT INTO password VALUES(?)",
+                        password)  # creates and inserts password hash into its own table
+            con.commit()
+            con.close()
+            console.print("Password created...")
+        else:
+            con.close()
+            console.print("Password exists...")
 
     def login(self):
         """Checks that password is correct and returns it for use with crypto funcs"""
         password = console.input("Please enter your password...\n")
-        return password
+        digest = hashes.Hash(hashes.SHA256())
+        digest.update(password.encode())
+        password = str(digest.finalize())
+        con = sqlite3.connect("database.db")
+        cur = con.cursor()
+        row = cur.execute("SELECT password FROM password")
+        hash_pass = row.fetchone()
+        while True:
+            if hash_pass[0] == password:
+                console.print("Password Correct!")
+                break
+            else:
+                console.print("Password Incorrect! Please try again.")
+                break
 
 
 if __name__ == "__main__":
@@ -62,6 +97,7 @@ if __name__ == "__main__":
     console.print("Running the preflight check...")
     pwman.dbcheck()
     pwman.saltcheck()
+    pwman.passcheck()
     console.print("Preflight complete!\n")
     password = pwman.login()
     console.print("\nWelcome to")  # Generated with TextKool using Big font
