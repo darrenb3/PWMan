@@ -11,50 +11,54 @@ import random
 
 class pwman:
     console = Console(highlight=False)
-    con = sqlite3.connect("database.db")
-    cur = con.cursor()
+    con = None
+    cur = None
     crypto = crypto()
 
     def __init__(self):
         """Checks for presence of sqlite db file"""
         self.console.print("Checking for database...")
-        db_present = os.path.exists("database.db")
+        db_present = os.path.isfile("database.db")
+        print(db_present)
         if db_present:  # Checking if database.db exits. If not creates db file and table
             self.console.print("Database present...")
             pass
         else:
+            self.con = sqlite3.connect("database.db")
+            self.cur = self.con.cursor()
             self.cur.execute("CREATE TABLE items(name, date, string)")
             self.cur.execute("CREATE TABLE salt(salt)")
             self.cur.execute("CREATE TABLE password(password)")
             self.console.print("Database created...")
-        """Checks for presence of salt in the database"""
-        self.console.print("Checking for salt presence")
-        row = self.cur.execute("SELECT salt FROM salt")
-        salt_check = row.fetchone()
-        if salt_check == None:
-            salt = [''.join(random.choices(string.ascii_lowercase +
-                                           string.digits, k=7))]
-            self.cur.execute("INSERT INTO salt VALUES(?)",
-                             salt)  # creates and inserts salt into its own table
-            self.con.commit()
-            self.console.print("Salt created...")
-        else:
-            self.console.print("Salt exists...")
-        """Checks for presence of password table. If not present prompts user to create their password and saves it"""
-        self.console.print("Checking for password presence")
-        row = self.cur.execute("SELECT password FROM password")
-        salt_check = row.fetchone()
-        if salt_check == None:
-            password = self.console.input("\nPlease enter a new password.\n")
-            digest = hashes.Hash(hashes.SHA256())
-            digest.update(password.encode())
-            password = [str(digest.finalize())]
-            self.cur.execute("INSERT INTO password VALUES(?)",
-                             password)  # creates and inserts password hash into its own table
-            self.con.commit()
-            self.console.print("Password created...")
-        else:
-            self.console.print("Password exists...")
+            # Checks for presence of salt in the database
+            self.console.print("Checking for salt presence")
+            row = self.cur.execute("SELECT salt FROM salt")
+            salt_check = row.fetchone()
+            if salt_check == None:
+                salt = [''.join(random.choices(string.ascii_lowercase +
+                                               string.digits, k=7))]
+                self.cur.execute("INSERT INTO salt VALUES(?)",
+                                 salt)  # creates and inserts salt into its own table
+                self.con.commit()
+                self.console.print("Salt created...")
+            else:
+                self.console.print("Salt exists...")
+            # Checks for presence of password table. If not present prompts user to create their password and saves it
+            self.console.print("Checking for password presence")
+            row = self.cur.execute("SELECT password FROM password")
+            salt_check = row.fetchone()
+            if salt_check == None:
+                password = self.console.input(
+                    "\nPlease enter a new password.\n")
+                digest = hashes.Hash(hashes.SHA256())
+                digest.update(password.encode())
+                password = [str(digest.finalize())]
+                self.cur.execute("INSERT INTO password VALUES(?)",
+                                 password)  # creates and inserts password hash into its own table
+                self.con.commit()
+                self.console.print("Password created...")
+            else:
+                self.console.print("Password exists...")
 
     def login(self):
         """Checks that password is correct and returns it for use with crypto funcs"""
@@ -105,24 +109,24 @@ class pwman:
         con.close()
         self.console.print("\nItem has been updated successfully\n")
 
-    def list_item(self,password):
+    def list_item(self, password):
         user_input = input(
-    "\nPlease enter the name of the item you want to read:\n")
+            "\nPlease enter the name of the item you want to read:\n")
         row = self.cur.execute(
             "SELECT name, date,string from items WHERE name LIKE ?", [user_input])
         result = row.fetchone()
         self.console.print(
             f"\n[bold underline #ffa6c9]{result[0]}[/bold underline #ffa6c9]\nLast updated at {result[1]}:\n")
-        self.console.print(self.crypto.decrypt(f"{result[2]}\n",password))
+        self.console.print(self.crypto.decrypt(f"{result[2]}\n", password))
 
-    
     def list_all_items(self):
         table = Table(title="Current Items")
         table.add_column("Name")  # style="pink"
         table.add_column("Last Edited")
         table.add_column("Contents")
         for row in self.cur.execute("SELECT name, date, string FROM items"):
-            table.add_row(f"{row[0]}", f"{row[1]}", self.crypto.decrypt(f"{row[2]}",password))
+            table.add_row(f"{row[0]}", f"{row[1]}",
+                          self.crypto.decrypt(f"{row[2]}", password))
         self.console = Console(highlight=False)
         self.console.print(table)
 
@@ -144,7 +148,7 @@ class pwman:
                 self.console.print("Please enter a valid confirmation.")
 
 
-#driver code
+# driver code
 if __name__ == "__main__":
     console = Console(highlight=False)
     console.print("Running the preflight check...")
@@ -171,13 +175,13 @@ To exit the app please type exit
 """
         user_input = console.input(
             "\nPlease enter a command. For a list of commands use [bold]help[/bold]:\n")
-        match user_input:        
+        match user_input:
             case "exit":
                 console.print(
                     "\nThank you for using Password Manager\n\nExiting...\n")
                 break
             case "new":
-                pwman.new_item(password)   
+                pwman.new_item(password)
             case "list -a":
                 pwman.list_all_items()
             case "list":
@@ -192,5 +196,3 @@ To exit the app please type exit
                     console.print("\nNo items were deleted\n")
             case _:
                 console.print(help_options)
-
-                
