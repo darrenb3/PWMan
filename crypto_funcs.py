@@ -12,10 +12,7 @@ class crypto:
         password = password.encode()
         salt = b"salt"  # need to create a way of creating a random salt at some point
         kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=480000
+            algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000
         )
         key = base64.urlsafe_b64encode(kdf.derive(password))
         f = Fernet(key)
@@ -23,14 +20,11 @@ class crypto:
         return cipher_text
 
     def decrypt(self, cipher_text, password):
-        """Accepts utf8 cipher text and password and return utf8 plain text """
+        """Accepts utf8 cipher text and password and return utf8 plain text"""
         password = password.encode()
         salt = b"salt"
         kdf = PBKDF2HMAC(
-            algorithm=hashes.SHA256(),
-            length=32,
-            salt=salt,
-            iterations=480000
+            algorithm=hashes.SHA256(), length=32, salt=salt, iterations=480000
         )
         key = base64.urlsafe_b64encode(kdf.derive(password))
         f = Fernet(key)

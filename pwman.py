@@ -20,7 +20,11 @@ class pwman:
         self.console.print("Checking for database...")
         db_present = os.path.isfile("database.db")
         print(db_present)
-        if db_present:  # Checking if database.db exits. If not creates db file and table
+        if (
+            db_present
+        ):  # Checking if database.db exits. If not creates db file and table
+            self.con = sqlite3.connect("database.db")
+            self.cur = self.con.cursor()
             self.console.print("Database present...")
             pass
         else:
@@ -35,10 +39,12 @@ class pwman:
             row = self.cur.execute("SELECT salt FROM salt")
             salt_check = row.fetchone()
             if salt_check == None:
-                salt = [''.join(random.choices(string.ascii_lowercase +
-                                               string.digits, k=7))]
-                self.cur.execute("INSERT INTO salt VALUES(?)",
-                                 salt)  # creates and inserts salt into its own table
+                salt = [
+                    "".join(random.choices(string.ascii_lowercase + string.digits, k=7))
+                ]
+                self.cur.execute(
+                    "INSERT INTO salt VALUES(?)", salt
+                )  # creates and inserts salt into its own table
                 self.con.commit()
                 self.console.print("Salt created...")
             else:
@@ -48,13 +54,13 @@ class pwman:
             row = self.cur.execute("SELECT password FROM password")
             salt_check = row.fetchone()
             if salt_check == None:
-                password = self.console.input(
-                    "\nPlease enter a new password.\n")
+                password = self.console.input("\nPlease enter a new password.\n")
                 digest = hashes.Hash(hashes.SHA256())
                 digest.update(password.encode())
                 password = [str(digest.finalize())]
-                self.cur.execute("INSERT INTO password VALUES(?)",
-                                 password)  # creates and inserts password hash into its own table
+                self.cur.execute(
+                    "INSERT INTO password VALUES(?)", password
+                )  # creates and inserts password hash into its own table
                 self.con.commit()
                 self.console.print("Password created...")
             else:
@@ -81,12 +87,11 @@ class pwman:
     def new_item(self, password):
         name = self.console.input("\nPlease enter a name for your item:\n")
         self.console.print("")
-        content = self.console.input(
-            "\nPlease enter the content of your item:\n")
+        content = self.console.input("\nPlease enter the content of your item:\n")
         # need to have driver code ask for password and pass into this function.
         content = self.crypto.encrypt(content, password)
         self.console.print("")
-        now = datetime.now().strftime('%H:%M:%S %m/%d/%Y')
+        now = datetime.now().strftime("%H:%M:%S %m/%d/%Y")
         data = [name, now, content]
         self.cur.execute("INSERT INTO items VALUES(?,?,?)", data)
         self.con.commit()
@@ -94,29 +99,31 @@ class pwman:
 
     def update_item(self, password):
         item_name = self.console.input(
-            "\nPlease enter the name of the item you want to update:\n")
+            "\nPlease enter the name of the item you want to update:\n"
+        )
         # Need to put error checking here that the record actually exists
         item_content = self.console.input(
-            "\nPlease enter the new content of the item:\n")
-        now = datetime.now().strftime('%H:%M:%S %m/%d/%Y')
+            "\nPlease enter the new content of the item:\n"
+        )
+        now = datetime.now().strftime("%H:%M:%S %m/%d/%Y")
         item_content = self.crypto.encrypt(item_content, password)
         data = [now, item_content, item_name]
         con = sqlite3.connect("database.db")
         cur = con.cursor()
-        cur.execute(
-            "UPDATE items SET date = ?, string = ? WHERE name LIKE ?", data)
+        cur.execute("UPDATE items SET date = ?, string = ? WHERE name LIKE ?", data)
         con.commit()
         con.close()
         self.console.print("\nItem has been updated successfully\n")
 
     def list_item(self, password):
-        user_input = input(
-            "\nPlease enter the name of the item you want to read:\n")
+        user_input = input("\nPlease enter the name of the item you want to read:\n")
         row = self.cur.execute(
-            "SELECT name, date,string from items WHERE name LIKE ?", [user_input])
+            "SELECT name, date,string from items WHERE name LIKE ?", [user_input]
+        )
         result = row.fetchone()
         self.console.print(
-            f"\n[bold underline #ffa6c9]{result[0]}[/bold underline #ffa6c9]\nLast updated at {result[1]}:\n")
+            f"\n[bold underline #ffa6c9]{result[0]}[/bold underline #ffa6c9]\nLast updated at {result[1]}:\n"
+        )
         self.console.print(self.crypto.decrypt(f"{result[2]}\n", password))
 
     def list_all_items(self):
@@ -125,23 +132,25 @@ class pwman:
         table.add_column("Last Edited")
         table.add_column("Contents")
         for row in self.cur.execute("SELECT name, date, string FROM items"):
-            table.add_row(f"{row[0]}", f"{row[1]}",
-                          self.crypto.decrypt(f"{row[2]}", password))
+            table.add_row(
+                f"{row[0]}", f"{row[1]}", self.crypto.decrypt(f"{row[2]}", password)
+            )
         self.console = Console(highlight=False)
         self.console.print(table)
 
     def delete_item(self):
         item_name = self.console.input(
-            "\nPlease enter the name of the item you want to delete:\n")
+            "\nPlease enter the name of the item you want to delete:\n"
+        )
         # Need to put error checking here that the record actually exists
         while True:
             confirmation = self.console.input(
-                f"\nAre you sure that you want to delete {item_name}? [bold red]This action is irreversible[/bold red]. (y/[bold]N[/bold]):\n")
+                f"\nAre you sure that you want to delete {item_name}? [bold red]This action is irreversible[/bold red]. (y/[bold]N[/bold]):\n"
+            )
             if confirmation.lower() == "n":
                 break
             elif confirmation.lower() == "y":
-                self.cur.execute(
-                    "DELETE FROM items WHERE name = ?", [item_name])
+                self.cur.execute("DELETE FROM items WHERE name = ?", [item_name])
                 self.con.commit()
                 return True
             else:
@@ -174,11 +183,11 @@ To delete a item please type delete
 To exit the app please type exit
 """
         user_input = console.input(
-            "\nPlease enter a command. For a list of commands use [bold]help[/bold]:\n")
+            "\nPlease enter a command. For a list of commands use [bold]help[/bold]:\n"
+        )
         match user_input:
             case "exit":
-                console.print(
-                    "\nThank you for using Password Manager\n\nExiting...\n")
+                console.print("\nThank you for using Password Manager\n\nExiting...\n")
                 break
             case "new":
                 pwman.new_item(password)
