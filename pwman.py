@@ -7,6 +7,87 @@ import os
 import sqlite3
 import string
 import random
+import PySimpleGUI as sg
+import time
+
+
+class gui:  # Test class that creates a super basic gui based on simplepygui
+    con = None
+    cur = None
+    crypto = crypto()
+
+    def login(self):
+        sg.theme("Reds")  # Add a touch of color
+
+        # All the stuff inside your window.
+        layout_entry = [
+            [sg.Text("Please enter your password"), sg.InputText()],
+            [sg.Button("Ok"), sg.Button("Cancel")],
+        ]
+        layout_success = [
+            [sg.Text("Password Correct")],
+            [sg.Text("Unlocking Database...")],
+        ]
+
+        # Create the Window
+        window = sg.Window("PWMan", layout_entry)
+        # Event Loop to process "events" and get the "values" of the inputs
+        while True:
+            event, values = window.read()
+            if (
+                event == sg.WIN_CLOSED or event == "Cancel"
+            ):  # if user closes window or clicks cancel
+                break
+            self.con = sqlite3.connect("database.db")
+            self.cur = self.con.cursor()
+            password = values[0]
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(password.encode())
+            password = str(digest.finalize())
+            row = self.cur.execute("SELECT password FROM password")
+            hash_pass = row.fetchone()
+            while True:
+                if hash_pass[0] == password:
+                    sg.popup("Password Correct", "Unlocking Database...")
+                    return hash_pass
+
+                else:
+                    # need to look at using a flag variable or other method to stop all execution of the app after 3 attempts
+                    sg.popup("Incorrect Password. Please try again.")
+                    break
+
+        window.close()
+
+    def main_pg(self, hash):
+        sg.theme("Reds")
+        table = []
+        columns = ["Name", "Last Edited", "Content"]
+        for row in self.cur.execute("SELECT name, date, string FROM items"):
+            table.append(
+                [f"{row[0]}", f"{row[1]}", self.crypto.decrypt(f"{row[2]}", hash)]
+            )
+        layout_main = [
+            [sg.Text("Welcome to PWMan")],
+            [
+                sg.Table(
+                    values=table,
+                    headings=columns,
+                    auto_size_columns=True,
+                    justification="center",
+                    key="-TABLE-",
+                    expand_x=True,
+                    expand_y=True,
+                )
+            ],
+        ]
+
+        window = sg.Window("PWMan", layout_main, size=(715, 200), resizable=True)
+        while True:
+            event, values = window.read()
+            print("event:", event, "values:", values)
+            if event == sg.WIN_CLOSED:
+                break
+        window.close()
 
 
 class pwman:
@@ -163,7 +244,12 @@ if __name__ == "__main__":
     console.print("Running the preflight check...")
     pwman = pwman()
     console.print("Preflight complete!\n")
-    password = str(pwman.login())
+    gui = gui()
+    hash = str(gui.login())
+    print(str(hash))
+    gui.main_pg(hash)
+    '''password = str(pwman.login())
+    print(password)
     console.print("\nWelcome to")  # Generated with TextKool using Big font
     logo = """
   _______          ____  __             
@@ -204,4 +290,4 @@ To exit the app please type exit
                 else:
                     console.print("\nNo items were deleted\n")
             case _:
-                console.print(help_options)
+                console.print(help_options)'''

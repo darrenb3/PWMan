@@ -7,6 +7,7 @@ name = "pypi"
 rich = "*"
 cryptography = "*"
 python-dotenv = "*"
+pysimplegui = "*"
 
 [dev-packages]
 
