@@ -48,10 +48,6 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
             self.con.commit()
 
     def main(self):
-        sg.theme("SystemDefault")  # Add a touch of color
-        # Login variable to start the log in process for the loop
-        self.con = sqlite3.connect("database.db")
-        self.cur = self.con.cursor()
         password = sg.popup_get_text("Please enter your password:", title="Login")
         digest = hashes.Hash(hashes.SHA256())
         digest.update(password.encode())
@@ -85,9 +81,15 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                     key="-TABLE-",
                     expand_x=True,
                     expand_y=True,
+                    enable_events=True,
                 )
             ],
-            [sg.Push(), sg.Button("New Item"), sg.Button("Refresh")],
+            [
+                sg.Push(),
+                sg.Button("New Item"),
+                sg.Button("Update Item"),
+                sg.Button("Refresh"),
+            ],
         ]
 
         # Create the Window
@@ -102,8 +104,12 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                 event == sg.WIN_CLOSED or event == "Cancel"
             ):  # if user closes window or clicks cancel
                 break
+            elif event == "-TABLE-":
+                selected = [table[i] for i in values["-TABLE-"]]
             elif event == "New Item":
                 self.new_item(hash_pass)
+            elif event == "Update Item":
+                self.update_item(hash_pass, selected[0][0])
             elif event == "Refresh":
                 table = self.db_fetch(hash_pass)
                 window["-TABLE-"].update(values=table)
@@ -132,6 +138,17 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
         self.cur.execute("INSERT INTO items VALUES(?,?,?)", data)
         self.con.commit()
         sg.popup_auto_close("created successfully")
+
+    def update_item(self, hash_pass, item_name):
+        item_content = sg.popup_get_text("Please enter the new content of your item:")
+        item_content = self.crypto.encrypt(item_content, str(hash_pass))
+        now = datetime.now().strftime("%H:%M:%S %m/%d/%Y")
+        data = [now, item_content, item_name]
+        self.cur.execute(
+            "UPDATE items SET date = ?, string = ? WHERE name LIKE ?", data
+        )
+        self.con.commit()
+        sg.popup_auto_close("Item updated successfully", auto_close_duration=2)
 
 
 # driver code
