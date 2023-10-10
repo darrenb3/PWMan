@@ -1,4 +1,7 @@
+import os
+import random
 import sqlite3
+import string
 from datetime import datetime
 
 import PySimpleGUI as sg
@@ -11,6 +14,38 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
     con = None
     cur = None
     crypto = crypto()
+
+    def __init__(
+        self,
+    ):  # This initiates the class and will perform a basic check for the db file. If it is not present then it will prompt the user to create it
+        sg.theme("SystemDefault")  # Add a touch of color
+        db_present = os.path.isfile("database.db")
+        if db_present:
+            self.con = sqlite3.connect("database.db")
+            self.cur = self.con.cursor()
+        elif not db_present:
+            self.con = sqlite3.connect("database.db")
+            self.cur = self.con.cursor()
+            self.cur.execute("CREATE TABLE items(name, date, string)")
+            self.cur.execute("CREATE TABLE salt(salt)")
+            self.cur.execute("CREATE TABLE password(password)")
+            salt = [
+                "".join(random.choices(string.ascii_lowercase + string.digits, k=7))
+            ]
+            self.cur.execute(
+                "INSERT INTO salt VALUES(?)", salt
+            )  # creates and inserts salt into its own table
+            password = sg.popup_get_text(
+                "Please enter the password you would like to use:",
+                title="First time setup",
+            )
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(password.encode())
+            password = [str(digest.finalize())]
+            self.cur.execute(
+                "INSERT INTO password VALUES(?)", password
+            )  # creates and inserts password hash into its own table
+            self.con.commit()
 
     def main(self):
         sg.theme("SystemDefault")  # Add a touch of color
