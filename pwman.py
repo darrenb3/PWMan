@@ -89,6 +89,7 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                 sg.Button("New Item"),
                 sg.Button("Update Item"),
                 sg.Button("Refresh"),
+                sg.Button("Delete", button_color=("white", "maroon")),
             ],
         ]
 
@@ -114,6 +115,8 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                 table = self.db_fetch(hash_pass)
                 window["-TABLE-"].update(values=table)
                 window.refresh()
+            elif event == "Delete":
+                self.delete_item(selected[0][0])
 
         window.close()
 
@@ -149,6 +152,16 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
         )
         self.con.commit()
         sg.popup_auto_close("Item updated successfully", auto_close_duration=2)
+
+    def delete_item(self, item_name):
+        confirmation = sg.popup_yes_no(
+            f"are you sure you want to delete {item_name}? ", title="Confirmation"
+        )
+        if confirmation == "Yes":
+            self.cur.execute("DELETE FROM items WHERE name = ?", [item_name])
+            self.con.commit()
+        elif confirmation == "No":
+            pass
 
 
 # driver code
