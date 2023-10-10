@@ -109,14 +109,23 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                 selected = [table[i] for i in values["-TABLE-"]]
             elif event == "New Item":
                 self.new_item(hash_pass)
+                table = self.db_fetch(hash_pass)
+                window["-TABLE-"].update(values=table)
+                window.refresh()
             elif event == "Update Item":
                 self.update_item(hash_pass, selected[0][0])
+                table = self.db_fetch(hash_pass)
+                window["-TABLE-"].update(values=table)
+                window.refresh()
             elif event == "Refresh":
                 table = self.db_fetch(hash_pass)
                 window["-TABLE-"].update(values=table)
                 window.refresh()
             elif event == "Delete":
                 self.delete_item(selected[0][0])
+                table = self.db_fetch(hash_pass)
+                window["-TABLE-"].update(values=table)
+                window.refresh()
 
         window.close()
 
