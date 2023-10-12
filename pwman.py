@@ -5,7 +5,6 @@ import string
 from datetime import datetime
 
 import PySimpleGUI as sg
-from hashlib import sha256
 from cryptography.hazmat.primitives import hashes
 
 from crypto_funcs import crypto
