@@ -5,6 +5,7 @@ import string
 from datetime import datetime
 
 import PySimpleGUI as sg
+from hashlib import sha256
 from cryptography.hazmat.primitives import hashes
 
 from crypto_funcs import crypto
@@ -24,8 +25,11 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
             self.con = sqlite3.connect("database.db")
             self.cur = self.con.cursor()
         elif not db_present:
-            self.con = sqlite3.connect("database.db")
+            self.con = sqlite3.connect(
+                "database.db"
+            )  # Calling connection will create the base DB file
             self.cur = self.con.cursor()
+            # Creating DB schema
             self.cur.execute("CREATE TABLE items(name, date, string)")
             self.cur.execute("CREATE TABLE salt(salt)")
             self.cur.execute("CREATE TABLE password(password)")
@@ -41,21 +45,21 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
             )
             digest = hashes.Hash(hashes.SHA256())
             digest.update(password.encode())
-            password = [str(digest.finalize())]
+            password = [str(digest.finalize().hex())]
             self.cur.execute(
                 "INSERT INTO password VALUES(?)", password
-            )  # creates and inserts password hash into its own table
+            )  # creates and inserts password hash as a hex string into its own table
             self.con.commit()
 
     def main(self):
         password = sg.popup_get_text("Please enter your password:", title="Login")
         digest = hashes.Hash(hashes.SHA256())
         digest.update(password.encode())
-        password = str(digest.finalize())
+        password = str(digest.finalize().hex())
         row = self.cur.execute("SELECT password FROM password")
-        hash_pass = row.fetchone()
+        hash_pass = row.fetchone()[0]  # Pulls hashed password hex from db
         while True:
-            if hash_pass[0] == password:
+            if hash_pass == password:
                 sg.popup_auto_close(
                     "Password Correct", "Unlocking Database...", auto_close_duration=2
                 )
@@ -136,7 +140,7 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                 [
                     f"{row[0]}",
                     f"{row[1]}",
-                    self.crypto.decrypt(f"{row[2]}", str(hash_pass)),
+                    self.crypto.decrypt(f"{row[2]}", hash_pass),
                 ]
             )
         return table
@@ -144,7 +148,7 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
     def new_item(self, hash_pass):
         name = sg.popup_get_text("Please enter a name for your item:")
         content = sg.popup_get_text("Please enter the content of your item:")
-        content = self.crypto.encrypt(content, str(hash_pass))
+        content = self.crypto.encrypt(content, hash_pass)
         now = datetime.now().strftime("%H:%M:%S %m/%d/%Y")
         data = [name, now, content]
         self.cur.execute("INSERT INTO items VALUES(?,?,?)", data)
@@ -153,7 +157,7 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
 
     def update_item(self, hash_pass, item_name):
         item_content = sg.popup_get_text("Please enter the new content of your item:")
-        item_content = self.crypto.encrypt(item_content, str(hash_pass))
+        item_content = self.crypto.encrypt(item_content, hash_pass)
         now = datetime.now().strftime("%H:%M:%S %m/%d/%Y")
         data = [now, item_content, item_name]
         self.cur.execute(
