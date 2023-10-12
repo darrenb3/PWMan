@@ -117,10 +117,17 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
                 window["-TABLE-"].update(values=table)
                 window.refresh()
             elif event == "Update Item":
-                self.update_item(hash_pass, selected[0][0])
-                table = self.db_fetch(hash_pass)
-                window["-TABLE-"].update(values=table)
-                window.refresh()
+                try:
+                    self.update_item(hash_pass, selected[0][0])
+                    table = self.db_fetch(hash_pass)
+                    window["-TABLE-"].update(values=table)
+                    window.refresh()
+                except:
+                    sg.popup_auto_close(
+                        "Please select an item to edit",
+                        auto_close_duration=2,
+                        title="Error",
+                    )
             elif event == "Refresh":
                 table = self.db_fetch(hash_pass)
                 window["-TABLE-"].update(values=table)
