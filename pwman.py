@@ -104,39 +104,41 @@ class gui:  # Test class that creates a super basic gui based on simplepygui
         # Event Loop to process "events" and get the "values" of the inputs
         while True:
             event, values = window.read()
-            if (
-                event == sg.WIN_CLOSED or event == "Cancel"
-            ):  # if user closes window or clicks cancel
-                break
-            elif event == "-TABLE-":
-                selected = [table[i] for i in values["-TABLE-"]]
-            elif event == "New Item":
-                self.new_item(hash_pass)
-                table = self.db_fetch(hash_pass)
-                window["-TABLE-"].update(values=table)
-                window.refresh()
-            elif event == "Update Item":
-                try:
-                    self.update_item(hash_pass, selected[0][0])
+            match event:
+                case sg.WIN_CLOSED:
+                    break
+                case "Cancel":
+                    break
+                case "-TABLE-":
+                    selected = [table[i] for i in values["-TABLE-"]]
+                case "New Item":
+                    self.new_item(hash_pass)
                     table = self.db_fetch(hash_pass)
                     window["-TABLE-"].update(values=table)
                     window.refresh()
-                except:
-                    sg.popup_auto_close(
-                        "Please select an item to edit",
-                        auto_close_duration=2,
-                        title="Error",
-                    )
-            elif event == "Refresh":
-                table = self.db_fetch(hash_pass)
-                window["-TABLE-"].update(values=table)
-                window.refresh()
-            elif event == "Delete":
-                self.delete_item(selected[0][0])
-                table = self.db_fetch(hash_pass)
-                window["-TABLE-"].update(values=table)
-                window.refresh()
-
+                case "Update Item":
+                    try:
+                        self.update_item(hash_pass, selected[0][0])
+                        table = self.db_fetch(hash_pass)
+                        window["-TABLE-"].update(values=table)
+                        window.refresh()
+                    except:
+                        sg.popup_auto_close(
+                            "Please select an item to edit",
+                            auto_close_duration=2,
+                            title="Error",
+                        )
+                case "Refresh":
+                    table = self.db_fetch(hash_pass)
+                    window["-TABLE-"].update(values=table)
+                    window.refresh()
+                case "Delete":
+                    self.delete_item(selected[0][0])
+                    table = self.db_fetch(hash_pass)
+                    window["-TABLE-"].update(values=table)
+                    window.refresh()
+                case _:
+                    pass
         window.close()
 
     def db_fetch(self, hash_pass):
