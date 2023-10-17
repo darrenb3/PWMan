@@ -297,17 +297,16 @@ class tui:
 
     def login(self):
         """Checks that password is correct and returns it for use with crypto funcs"""
-        password = self.console.input("\nPlease enter your password...\n")
-        digest = hashes.Hash(hashes.SHA256())
-        digest.update(password.encode())
-        password = str(digest.finalize().hex())
         row = self.cur.execute("SELECT password FROM password")
         hash_pass = row.fetchone()[0]
         while True:
+            password = self.console.input("\nPlease enter your password...\n")
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(password.encode())
+            password = str(digest.finalize().hex())
             if hash_pass == password:
                 self.console.print("Password Correct!")
                 return hash_pass
-
             else:
                 # need to look at using a flag variable or other method to stop all execution of the app after 3 attempts
                 self.console.print("Password Incorrect! Please try again.")
