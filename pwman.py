@@ -54,13 +54,13 @@ class gui:  # GUI class implemented with pysimplegui. Responsible for main gui w
             self.con.commit()
 
     def main(self):
-        password = sg.popup_get_text("Please enter your password:", title="Login")
-        digest = hashes.Hash(hashes.SHA256())
-        digest.update(password.encode())
-        password = str(digest.finalize().hex())
         row = self.cur.execute("SELECT password FROM password")
         hash_pass = row.fetchone()[0]  # Pulls hashed password hex from db
         while True:
+            password = sg.popup_get_text("Please enter your password:", title="Login")
+            digest = hashes.Hash(hashes.SHA256())
+            digest.update(password.encode())
+            password = str(digest.finalize().hex())
             if hash_pass == password:
                 sg.popup_auto_close(
                     "Password Correct", "Unlocking Database...", auto_close_duration=2
